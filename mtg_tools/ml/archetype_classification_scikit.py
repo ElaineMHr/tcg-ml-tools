@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# Use non-interactive backend for plots
+from plot_tools import plot_class_balance, plot_confusion_matrix
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ NUMERIC = [
 ]
 
 # ---------- Data access ----------
-def fetch_df(conn: sqlite3.Connection) -> pd.DataFrame:
+def fetch_df(conn: sqlite3.Connection):
     stats = pd.read_sql_query(f"""
         SELECT deck_id, {', '.join(NUMERIC + CATEGORICAL)}
         FROM deck_stats
@@ -86,7 +86,7 @@ def fetch_df(conn: sqlite3.Connection) -> pd.DataFrame:
     return df
 
 # ---------- Simple feature-name helper (matches our preprocessors) ----------
-def get_feature_names_known(ct, categorical=CATEGORICAL, numeric=NUMERIC):
+def get_feature_names(ct, categorical=CATEGORICAL, numeric=NUMERIC):
     """
     Works with our blocks:
       - "cat" = OneHotEncoder
@@ -120,37 +120,10 @@ def get_feature_names_known(ct, categorical=CATEGORICAL, numeric=NUMERIC):
 
     return names
 
-# ---------- Plot helpers (save to files, no GUI) ----------
-def plot_class_balance(y, out_path: Path, title="Class balance"):
-    labels, counts = np.unique(y, return_counts=True)
-    plt.figure()
-    plt.bar(labels, counts)
-    plt.title(title)
-    plt.xlabel("Class")
-    plt.ylabel("Count")
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=120)
-    plt.close()
-
-def plot_confusion_matrix(cm, classes, out_path: Path, title="Confusion matrix"):
-    plt.figure()
-    plt.imshow(cm)
-    plt.title(title)
-    plt.xlabel("Predicted")
-    plt.ylabel("True")
-    plt.xticks(range(len(classes)), classes, rotation=45, ha="right")
-    plt.yticks(range(len(classes)), classes)
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            plt.text(j, i, cm[i, j], ha="center", va="center")
-    plt.tight_layout()
-    plt.savefig(out_path, dpi=120)
-    plt.close()
-
 def plot_rf_importances(pipeline, out_path: Path, top_k=20, title="RF feature importance (top)"):
     rf = pipeline.named_steps["clf"]
     pre = pipeline.named_steps["pre"]
-    names = get_feature_names_known(pre)
+    names = get_feature_names(pre)
     importances = rf.feature_importances_
     order = np.argsort(importances)[::-1][:top_k]
     plt.figure()
@@ -164,7 +137,7 @@ def plot_rf_importances(pipeline, out_path: Path, top_k=20, title="RF feature im
 def plot_logreg_top_coefs(pipeline, out_path: Path, top_k=20, title="LogReg | top |coefficients|"):
     lr = pipeline.named_steps["clf"]
     pre = pipeline.named_steps["pre"]
-    names = get_feature_names_known(pre)
+    names = get_feature_names(pre)
     coefs = np.abs(lr.coef_)          # (n_classes, n_features)
     scores = coefs.sum(axis=0)        # global importance proxy
     order = np.argsort(scores)[::-1][:top_k]
@@ -177,7 +150,7 @@ def plot_logreg_top_coefs(pipeline, out_path: Path, top_k=20, title="LogReg | to
     plt.close()
 
 # ---------- Models (canonical transformers; only necessary changes) ----------
-def build_models():
+def build_models(seed: int = 42):
     # Sparse-friendly pieces for linear & RF
     ohe_sparse = OneHotEncoder(handle_unknown="ignore")  # sparse (default)
     scaler_sparse = StandardScaler()      # works with sparse
@@ -192,7 +165,7 @@ def build_models():
     logreg = Pipeline([
         ("pre", pre_linear),
         ("clf", LogisticRegression(
-            max_iter=2000, random_state=42
+            max_iter=2000, random_state=seed
         )),
     ])
 
@@ -209,7 +182,7 @@ def build_models():
     logreg_poly = Pipeline([
         ("pre", pre_poly),
         ("clf", LogisticRegression(
-            max_iter=3000, random_state=42
+            max_iter=3000, random_state=seed
         )),
     ])
 
@@ -224,7 +197,7 @@ def build_models():
         ("pre", pre_tree),
         ("clf", RandomForestClassifier(
             n_estimators=400, max_depth=None, min_samples_split=2,
-            n_jobs=-1, random_state=42
+            n_jobs=-1, random_state=seed
         )),
     ])
 
@@ -238,7 +211,7 @@ def build_models():
     )
     hgbt = Pipeline([
         ("pre", pre_hgbt),
-        ("clf", HistGradientBoostingClassifier(random_state=42))
+        ("clf", HistGradientBoostingClassifier(random_state=seed))
     ])
 
     # 5) SVC (RBF)
@@ -251,7 +224,7 @@ def build_models():
     )
     svc = Pipeline([
         ("pre", pre_svc),
-        ("clf", SVC(kernel="rbf", C=3.0, gamma="scale", probability=False, random_state=42)),
+        ("clf", SVC(kernel="rbf", C=3.0, gamma="scale", probability=False, random_state=seed)),
     ])
 
     return {
@@ -263,18 +236,18 @@ def build_models():
     }
 
 # ---------- Evaluation ----------
-def evaluate_models(df: pd.DataFrame, seed: int = 15):
+def evaluate_models(df: pd.DataFrame, seed: int = 42):
     X = df[CATEGORICAL + NUMERIC]   # keep as DataFrame so CT can select by name
     y = df["label"].values
 
     # Save class balance
-    plot_class_balance(y, BASE_DIR / "class_balance.png", title="Class balance (labeled)")
+    plot_class_balance(y, BASE_DIR / "class_balance.png", title="Class balance")
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.20, stratify=y, random_state=seed
     )
 
-    models = build_models()
+    models = build_models(seed)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
     scorer = "f1_macro"
 
@@ -351,7 +324,7 @@ def main():
     # Quick class counts
     print("Class counts:\n", df["label"].value_counts().to_string(), "\n")
 
-    evaluate_models(df, seed=15)
+    evaluate_models(df, seed=42)
 
 if __name__ == "__main__":
     main()
