@@ -28,6 +28,7 @@ Database/img/
 data/
 Scraper_backup/
 Database/
+mtgcore.db
 
 # Archives and large binaries
 *.zip
@@ -51,4 +52,3 @@ archive/
 .env
 .env.*
 .editorconfig
-mtgcore.db

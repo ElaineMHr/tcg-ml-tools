@@ -7,6 +7,7 @@ Sources examined:
 - `mtg_tools/db/initialize_archetypes_formats.py`
 - `mtg_tools/db/initialize_deck_stats.py`
 - `mtg_tools/db/populate/populate_decks.py` (for usage expectations)
+- `mtg_tools/db/populate/populate_REST_FIX.py` (authoritative deck_stats schema + population)
 - `mtg_tools/db/populate_cards.py` and `mtg_tools/db/populate_cards_db.py`
 - `mtg_tools/db/populate_keywords_and_types_db.py`
 - `mtg_tools/db/populate deck_formats.py`
@@ -14,7 +15,10 @@ Sources examined:
 Notes:
 - The schema does not declare foreign keys, but relationships are implied and noted below.
 - Several columns store JSON-encoded data in `TEXT` fields (documented per table).
-- There are two alternative definitions of `deck_stats` across scripts; both are documented.
+- The authoritative `deck_stats` schema is defined and populated by
+  `mtg_tools/db/populate/populate_REST_FIX.py`. Older init-time variants in
+  `initialize_cards_decks.py` and `initialize_deck_stats.py` are legacy and not
+  populated by the current pipeline.
 
 ## Cards and Types
 
@@ -126,7 +130,39 @@ Table: `deck_archetypes`
 - archetype_name: TEXT            (→ archetypes.name)
 - source: TEXT CHECK in ('raw','manual','model')
 
-## Deck Statistics (two variants in code)
+## Deck Statistics
+
+Authoritative definition (created and populated by `populate/populate_REST_FIX.py`):
+- deck_id: TEXT, PRIMARY KEY      (+> decks.deck_id)
+- avg_cmc: REAL NOT NULL          (average CMC of non-land maindeck cards)
+- main_tribe: TEXT                (dominant creature subtype if >= 50% of mentions)
+- dominant_type: TEXT             (dominant non-land supertype among Candidate types)
+
+- cmc_0: INTEGER DEFAULT 0        (count of cards bucketed at CMC 0)
+- cmc_1: INTEGER DEFAULT 0
+- cmc_2: INTEGER DEFAULT 0
+- cmc_3: INTEGER DEFAULT 0
+- cmc_4: INTEGER DEFAULT 0
+- cmc_5: INTEGER DEFAULT 0
+- cmc_6: INTEGER DEFAULT 0
+- cmc_7_plus: INTEGER DEFAULT 0   (count of cards with CMC >= 7)
+
+- color_W: INTEGER DEFAULT 0      (count of cards with W in color_identity)
+- color_U: INTEGER DEFAULT 0
+- color_B: INTEGER DEFAULT 0
+- color_R: INTEGER DEFAULT 0
+- color_G: INTEGER DEFAULT 0
+- color_C: INTEGER DEFAULT 0      (colorless)
+
+- features_version: TEXT DEFAULT 'v1'
+- generated_at: TEXT DEFAULT CURRENT_TIMESTAMP
+
+Population notes:
+- Stats derive from `deck_cards_maindeck` joined to `cards` and `card_faces`.
+- Average CMC excludes Lands from the average denominator; CMC buckets include Lands as counted in the script.
+- Upserts on `deck_id`; the script drops and recreates the table before population for demo DB rebuilds.
+
+Legacy variants (defined but not populated by current pipeline):
 
 Variant A: defined in `initialize_cards_decks.py`
 - deck_id: TEXT, PRIMARY KEY      (→ decks.deck_id)
@@ -185,9 +221,4 @@ Formats (`populate deck_formats.py`)
 - `decks_deduplicated.representative_deck_id` → `decks.deck_id`
 - `deck_formats.deck_id` → `decks.deck_id`; `deck_formats.format_name` → `formats.format_name`
 - `deck_archetypes.deck_id` → `decks.deck_id`; `deck_archetypes.archetype_name` → `archetypes.name`
-
-## Known Mismatches
-
-- `populate/populate_decks.py` inserts into a `decks` column named `format`, which does not exist in the `initialize_cards_decks.py` schema. Either remove that column from the insert or add a `format` column to `decks` if you need it.
-- Two conflicting `deck_stats` definitions exist; align your initialization and consumers on one.
 
