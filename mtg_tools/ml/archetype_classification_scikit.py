@@ -40,7 +40,7 @@ MODEL_OUT = (BASE_DIR / "best_archetype_model.joblib").resolve()
 
 # --- Labels & features (canonical) ---
 BUCKET_NAMES = ("Aggro", "Midrange", "Control")
-SOURCE_PRIORITY = ("manual", "model", "raw")
+SOURCE_PRIORITY = ("manual", "raw")
 
 CATEGORICAL = ["dominant_type", "main_tribe"]
 NUMERIC = [
