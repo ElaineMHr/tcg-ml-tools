@@ -1,16 +1,3 @@
-"""
-Rebuilds a flat deck_stats table for the demo DB.
-
-Layout assumption:
-  - This script file: db/populate/script/make_deck_stats_demo.py
-  - Database file   : db/mtgcore_demo.db  (two folders up from this script)
-
-Behavior:
-  - Drops & recreates deck_stats (flat schema)
-  - Populates from deck_cards_maindeck + cards (+ card_faces for types)
-  - Adds features_version + generated_at for provenance
-"""
-
 import os
 import re
 import sqlite3
@@ -19,8 +6,7 @@ from collections import Counter
 from contextlib import closing
 
 # --- Path to DB (fixed relative) ---
-BASE_DIR = Path(__file__).resolve().parent          # db/populate/script
-DB_PATH  = (BASE_DIR / ".." / ".." / "db" / "mtgcore_demo.db").resolve()
+DB_PATH = "mtgcore.db"
 
 # --- Config ---
 CREATURE_THRESHOLD = 0.50         # ≥ 50% of creature cards (see notes) → main_tribe
@@ -57,37 +43,6 @@ def parse_type_line(type_line):
     supers = {tok for tok in left.split() if tok in SUPER_TYPES}
     subs = [tok for tok in right.split() if tok] if "Creature" in supers else []
     return supers, subs
-
-def drop_and_create(conn: sqlite3.Connection):
-    with conn:
-        conn.execute("DROP TABLE IF EXISTS deck_stats;")
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS deck_stats (
-              deck_id        TEXT PRIMARY KEY,
-              avg_cmc        REAL NOT NULL,
-              main_tribe     TEXT,
-              dominant_type  TEXT,
-
-              cmc_0          INTEGER DEFAULT 0,
-              cmc_1          INTEGER DEFAULT 0,
-              cmc_2          INTEGER DEFAULT 0,
-              cmc_3          INTEGER DEFAULT 0,
-              cmc_4          INTEGER DEFAULT 0,
-              cmc_5          INTEGER DEFAULT 0,
-              cmc_6          INTEGER DEFAULT 0,
-              cmc_7_plus     INTEGER DEFAULT 0,
-
-              color_W        INTEGER DEFAULT 0,
-              color_U        INTEGER DEFAULT 0,
-              color_B        INTEGER DEFAULT 0,
-              color_R        INTEGER DEFAULT 0,
-              color_G        INTEGER DEFAULT 0,
-              color_C        INTEGER DEFAULT 0,
-
-              features_version TEXT DEFAULT 'v1',
-              generated_at     TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
 
 def iter_deck_ids(conn: sqlite3.Connection):
     # Use maindeck presence to determine which decks to compute
@@ -211,22 +166,9 @@ def upsert(conn: sqlite3.Connection, deck_id: str, s: dict):
     )
 
 def main():
-    if not DB_PATH.exists():
-        print(f"DB not found at {DB_PATH}\n"
-              f"Expected layout:\n"
-              f"  - Script: {BASE_DIR}\n"
-              f"  - DB    : {BASE_DIR.parent.parent / 'mtgcore_demo.db'}")
-        return
-
-    print(f"Using DB: {DB_PATH}")
-
-    with closing(sqlite3.connect(str(DB_PATH))) as conn:
-        conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("PRAGMA synchronous=NORMAL;")
-
-        print("Dropping & creating deck_stats …")
-        drop_and_create(conn)
-
+    
+    with closing(sqlite3.connect((DB_PATH))) as conn:
+        
         # Gather deck ids
         deck_ids = list(iter_deck_ids(conn))
         print(f"Found {len(deck_ids)} decks with maindeck rows.")
@@ -240,7 +182,7 @@ def main():
                 upsert(conn, deck_id, stats)
                 processed += 1
                 if processed % 500 == 0:
-                    print(f"  processed {processed} decks…")
+                    print(f"- processed {processed} decks...")
 
         n = conn.execute("SELECT COUNT(*) FROM deck_stats;").fetchone()[0]
         print(f"deck_stats populated: {n} rows")

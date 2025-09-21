@@ -57,17 +57,6 @@ def populate_keywords_and_types(db_path="mtgcore.db", data_dir="./keywords and t
     cur = conn.cursor()
 
     cur.executescript("""
-    CREATE TABLE IF NOT EXISTS keywords (
-        name TEXT PRIMARY KEY,
-        source TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS types (
-        name TEXT PRIMARY KEY,
-        category TEXT CHECK(category IN ('supertype', 'type', 'subtype')),
-        parent_type TEXT
-    );
-
     DELETE FROM keywords;
     DELETE FROM types;
     """)

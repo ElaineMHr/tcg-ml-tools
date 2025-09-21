@@ -170,11 +170,11 @@ def populate_decks(db_path="mtgcore.db", deck_file="scraped_deck_data.json"):
         cur.execute("""
         INSERT INTO decks (
             deck_id, deck_hash, source, source_url, 
-            companion_id, main_color_identity
+            companion_id, main_color_identity, deck_title
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
-            deck_id, deck_hash, source, url, companion, ""
-        ))
+            deck_id, deck_hash, source, url, companion, "", ""
+        )) # deck names for now empty
 
         for cid, count in mapped_main:
             cur.execute("INSERT INTO deck_cards_maindeck (deck_id, card_id, count) VALUES (?, ?, ?)",
