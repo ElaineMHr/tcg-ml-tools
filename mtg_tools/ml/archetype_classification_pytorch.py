@@ -25,7 +25,6 @@ from plot_tools import plot_class_balance, plot_confusion_matrix
 # --- Paths (no args) ---
 BASE_DIR = Path(__file__).resolve().parent                  # .../mtg_tools/ml
 DB_PATH  = (BASE_DIR.parent / "db" / "mtgcore_demo.db").resolve()
-MODEL_OUT = (BASE_DIR / "best_archetype_model.joblib").resolve()
 
 # --- Labels & features (canonical) ---
 BUCKET_NAMES = ("Aggro", "Midrange", "Control")
@@ -81,7 +80,7 @@ def fetch_df(conn: sqlite3.Connection):
     df[NUMERIC] = df[NUMERIC].fillna(0.0)
     return df
 
-# ---------- Simple feature-name helper (matches our preprocessors) ----------
+# ---------- Simple feature-name helper (matches preprocessors) ----------
 def get_feature_names(ct, categorical=CATEGORICAL, numeric=NUMERIC):
     """
     Extract feature names for NN input.
@@ -140,7 +139,7 @@ def split_train_test(df, seed: int = 42, test_size: float = 0.10):
       - y_*   : numpy int array in {0,1,2}
     """
     X = df[CATEGORICAL + NUMERIC]
-    y = df["label"].map(CLASS_TO_ID).astype(int).values # CLASS_TO_ID defined with BUCKET_NAMES
+    y = df["label"].map(CLASS_TO_ID).astype(int).values
 
     X_train_df, X_test_df, y_train, y_test = train_test_split(
         X, y, test_size=test_size, stratify=y, random_state=seed
@@ -406,59 +405,58 @@ def run_epochs(
 
 def main(seed: int = 42, test_pct: float = 0.10, val_pct: float = 0.10,
          epochs: int = 30, patience: int = 10, optimizer_name: str = "adam"):
-    # 0) DB → DataFrame
+    # DB → DataFrame
     if not DB_PATH.exists():
-        raise SystemExit(f"DB not found at {DB_PATH}. Expected demo DB.")
+        raise SystemExit(f"DB not found at {DB_PATH}.")
     print(f"Using DB: {DB_PATH}")
     with sqlite3.connect(str(DB_PATH)) as conn:
         df = fetch_df(conn)
 
-    # 1) quick class counts + (optional) plot balance
+    # Quick class counts + plot balance
     print("Class counts:\n", df["label"].value_counts().to_string(), "\n")
-    # plot_class_balance(df["label"].values, BASE_DIR / "class_balance_nn.png")  # if you want
+    plot_class_balance(df["label"].values, BASE_DIR / "class_balance_nn.png")
 
-    # 2) train/test split (stratified), then carve val from train
+    # Train/test split (stratified), then val from train
     (X_train_df, y_train), (X_test_df, y_test) = split_train_test(df, seed=seed, test_size=test_pct)
 
     (X_tr_df, y_tr), (X_val_df, y_val) = split_train_val(X_train_df, y_train, test_size=0.1, val_size=0.1, seed=seed)
 
-    # 3) fit preprocessor on TRAIN-only; transform train/val/test
+    # Fit preprocessor on Train-only; transform train/val/test
     pre, X_tr_np, feature_names = preprocess_train_data(X_tr_df)
     X_val_np = transform_test_data(pre, X_val_df)
     X_te_np  = transform_test_data(pre, X_test_df)
 
-    # 4) arrays -> tensors (note: you can keep them on CPU and move per-batch if you prefer)
+    # Arrays -> tensors
     Xtr, ytr = to_torch_tensors(X_tr_np,  y_tr,   DEVICE)
     Xva, yva = to_torch_tensors(X_val_np, y_val,  DEVICE)
     Xte, yte = to_torch_tensors(X_te_np,  y_test, DEVICE)
 
-    # 5) loaders
+    # Loaders
     train_loader, val_loader, test_loader = make_loaders(
         Xtr, ytr, Xva, yva, Xte, yte, batch_size_train=64, batch_size_val=256, batch_size_test=256, device=DEVICE
     )
 
-    # 6) model (input_dim = columns after OHE+scale)
+    # Model (input_dim = columns after OHE+scale)
     input_dim = X_tr_np.shape[1]
     model = ArchetypeNN(input_dim, hidden=(64, 32), num_classes=len(BUCKET_NAMES)).to(DEVICE)
 
-    # 7) loss & optimizer
+    # Loss & optimizer
     criterion, optimizer = make_criterion_and_optimiser(
         model, learning_rate=1e-3 if optimizer_name!="sgd" else 0.05,
         weight_decay=1e-4, optimizer_name=optimizer_name
     )
 
-    # 8) train with validation each epoch (early stopping on best val F1)
+    # Train with validation each epoch with early stop on best val f1)
     best_metrics, best_state, _, _ = run_epochs(
         model, train_loader, val_loader, criterion, optimizer,
         device=DEVICE, max_epochs=epochs, patience=patience
     )
 
-    # 9) final test evaluation (once, with best weights already reloaded by run_epochs)
+    # Final test evaluation (with the best weights from run_epochs)
     test_loss, test_acc, test_f1, y_true, y_pred = evaluate(model, test_loader, criterion, DEVICE)
     print(f"\nFinal test — loss {test_loss:.4f} acc {test_acc:.3f} f1 {test_f1:.3f}")
     report_and_plot(y_true, y_pred, BASE_DIR)
     
 if __name__ == "__main__":
     main(seed=42, test_pct=0.10, val_pct=0.10, epochs=30, patience=10, optimizer_name="adam")
-    # For the portfolio comparison:
-    # main(seed=15, test_pct=0.10, val_pct=0.10, epochs=30, patience=10, optimizer_name="sgd")
+    # main(seed=42, test_pct=0.10, val_pct=0.10, epochs=30, patience=10, optimizer_name="sgd")

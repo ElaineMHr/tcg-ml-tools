@@ -31,12 +31,10 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     classification_report, confusion_matrix
 )
-import joblib
 
 # --- Paths (no args) ---
 BASE_DIR = Path(__file__).resolve().parent                  # .../mtg_tools/ml
 DB_PATH  = (BASE_DIR.parent / "db" / "mtgcore_demo.db").resolve()
-MODEL_OUT = (BASE_DIR / "best_archetype_model.joblib").resolve()
 
 # --- Labels & features (canonical) ---
 BUCKET_NAMES = ("Aggro", "Midrange", "Control")
@@ -85,7 +83,7 @@ def fetch_df(conn: sqlite3.Connection):
     df[NUMERIC] = df[NUMERIC].fillna(0.0)
     return df
 
-# ---------- Simple feature-name helper (matches our preprocessors) ----------
+# ---------- Simple feature-name helper (matches preprocessors) ----------
 def get_feature_names(ct, categorical=CATEGORICAL, numeric=NUMERIC):
     """
     Works with our blocks:
@@ -120,6 +118,7 @@ def get_feature_names(ct, categorical=CATEGORICAL, numeric=NUMERIC):
 
     return names
 
+# ---------- Plots ----------
 def plot_rf_importances(pipeline, out_path: Path, top_k=20, title="RF feature importance (top)"):
     rf = pipeline.named_steps["clf"]
     pre = pipeline.named_steps["pre"]
@@ -237,7 +236,7 @@ def build_models(seed: int = 42):
 
 # ---------- Evaluation ----------
 def evaluate_models(df: pd.DataFrame, seed: int = 42):
-    X = df[CATEGORICAL + NUMERIC]   # keep as DataFrame so CT can select by name
+    X = df[CATEGORICAL + NUMERIC]   # keep as DataFrame so ColumnTransformer can select by name
     y = df["label"].values
 
     # Save class balance
@@ -298,15 +297,6 @@ def evaluate_models(df: pd.DataFrame, seed: int = 42):
     elif best_name in ("LogReg", "LogReg+Poly"):
         plot_logreg_top_coefs(best_model, BASE_DIR / "logreg_top_coeffs.png")
 
-    # Save best pipeline
-    joblib.dump({
-        "pipeline": best_model,
-        "classes": list(BUCKET_NAMES),
-        "categorical": CATEGORICAL,
-        "numeric": NUMERIC,
-        "best_name": best_name,
-    }, MODEL_OUT)
-    print(f"\nSaved best model → {MODEL_OUT}")
     print(f"Saved plots → {BASE_DIR / 'class_balance.png'}, {BASE_DIR / 'confusion_matrix.png'}"
           + (", and feature plot" if best_name in ('RandomForest','LogReg','LogReg+Poly') else ""))
 
