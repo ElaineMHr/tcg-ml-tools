@@ -55,7 +55,4 @@ archive/
 pyrightconfig.json
 
 # Files
-mtg_tools/ml/kmeans.py
-mtg_tools/ml/visualisation.py
 mtg_tools/ml/winrate_prediction.py
-mtg_tools/FIX.py

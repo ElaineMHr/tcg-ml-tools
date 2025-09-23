@@ -192,6 +192,7 @@ def main():
 
     # PCA 2D - Feature Analysis
     plot_feature_analysis(pca_2D, feat_names, BASE_DIR / "pca_2D_feature_analysis.png")
+    
     print(f"Saved plots → {BASE_DIR / 'scree_plot.png'}, {BASE_DIR / 'pca_2D_scatter.png'}, {BASE_DIR / 'pca_2D_feature_analysis.png'}")
 
 if __name__ == "__main__":
