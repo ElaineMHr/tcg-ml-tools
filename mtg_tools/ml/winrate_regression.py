@@ -30,7 +30,7 @@ from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsRegressor
 
 from sklearn.model_selection import train_test_split, KFold, cross_val_score
-from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
+from sklearn.metrics import make_scorer, r2_score, mean_absolute_error, root_mean_squared_error
 
 # --- Paths (no args) ---
 BASE_DIR = Path(__file__).resolve().parent                  # .../mtg_tools/ml
@@ -271,7 +271,7 @@ def build_models(seed: int = 42):
     )
     knn_11 = Pipeline([
         ("pre", pre_knn),
-        ("clf", KNeighborsRegressor(n_neighbors=11, weights="distance")),
+        ("clf", KNeighborsRegressor(n_neighbors=11, weights="distance", n_jobs=-1)),
     ])
 
     return {
@@ -309,7 +309,11 @@ def evaluate_models(df: pd.DataFrame, seed: int = 42):
 
     models = build_models(seed)
     cv = KFold(n_splits=5, shuffle=True, random_state=seed)
-    scorer = "r2"
+    # scorer = "r2"
+    def r2_clipped(y_true, y_pred):
+        return r2_score(y_true, np.clip(y_pred, 0.0, 1.0))
+
+    SCORER = make_scorer(r2_clipped, greater_is_better=True)
 
     print(f"CV metric: R²\n")
     header = f'{"Model":<12} {"CV R2":>8}'
@@ -319,7 +323,7 @@ def evaluate_models(df: pd.DataFrame, seed: int = 42):
     cv_scores = {}
 
     for name, pipe in models.items():
-        score = cross_val_score(pipe, X_train, y_train, cv=cv, scoring=scorer, n_jobs=-1).mean()
+        score = cross_val_score(pipe, X_train, y_train, cv=cv, scoring=SCORER, n_jobs=-1).mean()
         cv_scores[name] = score
         print(f"{name:<12} {score:>8.3f}")
 
@@ -330,7 +334,8 @@ def evaluate_models(df: pd.DataFrame, seed: int = 42):
     
     # Fit best on train, evaluate on test
     best_model = models[best_name].fit(X_train, y_train)
-    y_pred = best_model.predict(X_test)
+    y_pred_unclipped = best_model.predict(X_test)
+    y_pred = np.clip(y_pred_unclipped, 0.0, 1.0)
     
     r2  = r2_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)

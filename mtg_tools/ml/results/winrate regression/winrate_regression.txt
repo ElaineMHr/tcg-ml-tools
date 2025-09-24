@@ -1,0 +1,29 @@
+Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
+CV metric: R²
+
+Model           CV R2
+---------------------
+Ridge           0.550
+PolyRidge       0.713
+kNN             0.680
+
+Best by CV R²: PolyRidge
+
+Model              R2      MAE     RMSE
+---------------------------------------
+PolyRidge       0.715    0.049    0.064
+
+Saved → D:\Working Files\MTGA\Tools\Python\local_dev\cv_r2_bar.png
+Saved → D:\Working Files\MTGA\Tools\Python\local_dev\pred_vs_true_scatter.png
+Saved → D:\Working Files\MTGA\Tools\Python\local_dev\poly_ridge_coef_top.png
+
+Model           CV R2
+---------------------
+Ridge           0.556
+PolyRidge       0.723
+
+Best by CV R²: PolyRidge
+
+Model              R2      MAE     RMSE
+---------------------------------------
+PolyRidge       0.724    0.049    0.063
