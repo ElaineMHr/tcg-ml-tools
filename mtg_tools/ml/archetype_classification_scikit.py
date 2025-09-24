@@ -133,7 +133,7 @@ def plot_rf_importances(pipeline, out_path: Path, top_k=20, title="RF feature im
     plt.savefig(out_path, dpi=120)
     plt.close()
 
-def plot_logreg_top_coefs(pipeline, out_path: Path, top_k=20, title="LogReg | top |coefficients|"):
+def plot_logreg_top_coefs(pipeline, out_path: Path, top_k=20, title="LogReg coefficients (top)"):
     lr = pipeline.named_steps["clf"]
     pre = pipeline.named_steps["pre"]
     names = get_feature_names(pre)
@@ -150,15 +150,12 @@ def plot_logreg_top_coefs(pipeline, out_path: Path, top_k=20, title="LogReg | to
 
 # ---------- Models (canonical transformers; only necessary changes) ----------
 def build_models(seed: int = 42):
-    # Sparse-friendly pieces for linear & RF
-    ohe_sparse = OneHotEncoder(handle_unknown="ignore")  # sparse (default)
-    scaler_sparse = StandardScaler()      # works with sparse
-
+    
     # 1) Logistic Regression: OHE(cats) + Scale(nums)
     pre_linear = ColumnTransformer(
         transformers=[
-            ("cat", ohe_sparse, CATEGORICAL),
-            ("num", scaler_sparse, NUMERIC),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL),
+            ("num", StandardScaler(), NUMERIC),
         ]
     )
     logreg = Pipeline([
@@ -171,7 +168,7 @@ def build_models(seed: int = 42):
     # 2) Logistic Regression + PolynomialFeatures: OHE(cats) + Scale(Poly(nums))
     pre_poly = ColumnTransformer(
         transformers=[
-            ("cat", ohe_sparse, CATEGORICAL),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL),
             ("num_poly", Pipeline([
                 ("poly", PolynomialFeatures(degree=2, include_bias=False)),
                 ("scaler", StandardScaler()),
@@ -188,7 +185,7 @@ def build_models(seed: int = 42):
     # 3) RandomForest: OHE(cats) + Passthrough(nums)
     pre_tree = ColumnTransformer(
         transformers=[
-            ("cat", ohe_sparse, CATEGORICAL),
+            ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL),
             ("num", "passthrough", NUMERIC),
         ]
     )

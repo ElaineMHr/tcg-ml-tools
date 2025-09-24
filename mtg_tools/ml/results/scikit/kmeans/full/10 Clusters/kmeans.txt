@@ -1,0 +1,17 @@
+Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
+d:\Working Files\MTGA\Tools\Python\local_dev\kmeans.py:152: UserWarning: Creating legend with loc="best" can be slow with large amounts of data.  plt.tight_layout()
+d:\Working Files\MTGA\Tools\Python\local_dev\kmeans.py:153: UserWarning: Creating legend with loc="best" can be slow with large amounts of data.  plt.savefig(out_path, dpi=120)
+Saved plots → D:\Working Files\MTGA\Tools\Python\local_dev\pca_scatter_clusters.png, D:\Working Files\MTGA\Tools\Python\local_dev\clusters_features_heatmap.png
+
+K=10 - Cluster summary (label percentages use labeled rows only):
+ cluster  size_total  size_labeled  size_unlabeled  percentage_Aggro  percentage_Midrange  percentage_Control   purity   entropy
+       0       76684         32845           43839          0.262019             0.039945            0.698036 0.698036  1.053886
+       1      103705         48877           54828          0.542382             0.068478            0.389140 0.542382  1.273472
+       2       45123         16206           28917          0.427249             0.183019            0.389732 0.427249  1.502375
+       3       61675         34486           27189          0.800760             0.052833            0.146407 0.800760  0.886662
+       4       59507         31205           28302          0.456369             0.174171            0.369460 0.456369  1.486377
+       5       34579          6637           27942          0.281151             0.072171            0.646678 0.646678  1.195058
+       6       86375         37156           49219          0.664523             0.116455            0.219022 0.664523  1.232916
+       7       60301         35081           25220          0.964283             0.027080            0.008637 0.964283  0.250804
+       8       63893         31113           32780          0.659178             0.258027            0.082795 0.659178  1.198218
+       9         868             3             865          0.000000             0.000000            1.000000 1.000000 -0.000000

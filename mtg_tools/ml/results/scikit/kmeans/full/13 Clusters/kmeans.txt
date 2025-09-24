@@ -1,0 +1,20 @@
+Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
+d:\Working Files\MTGA\Tools\Python\local_dev\kmeans.py:152: UserWarning: Creating legend with loc="best" can be slow with large amounts of data.  plt.tight_layout()
+d:\Working Files\MTGA\Tools\Python\local_dev\kmeans.py:153: UserWarning: Creating legend with loc="best" can be slow with large amounts of data.  plt.savefig(out_path, dpi=120)
+Saved plots → D:\Working Files\MTGA\Tools\Python\local_dev\pca_scatter_clusters.png, D:\Working Files\MTGA\Tools\Python\local_dev\clusters_features_heatmap.png
+
+K=13 - Cluster summary (label percentages use labeled rows only):
+ cluster  size_total  size_labeled  size_unlabeled  percentage_Aggro  percentage_Midrange  percentage_Control   purity   entropy
+       0       54023         32924           21099          0.973059             0.021565            0.005376 0.973059  0.198235
+       1       38234         17816           20418          0.341884             0.236922            0.421194 0.421194  1.547005
+       2       31101          5783           25318          0.274425             0.070206            0.655369 0.655369  1.180518
+       3       47659         26436           21223          0.649947             0.279883            0.070169 0.649947  1.187146
+       4       77993         38307           39686          0.498081             0.064349            0.437570 0.498081  1.277297
+       5         866             3             863          0.000000             0.000000            1.000000 1.000000 -0.000000
+       6       28440         14422           14018          0.632367             0.230481            0.137152 0.632367  1.299190
+       7       59743         24775           34968          0.480565             0.101312            0.418123 0.480565  1.368696
+       8       35506         10249           25257          0.512245             0.068397            0.419358 0.512245  1.284824
+       9       54151         27746           26405          0.251820             0.022922            0.725258 0.725258  0.961974
+      10       80934         36129           44805          0.661076             0.129730            0.209195 0.661076  1.249144
+      11       30312         10032           20280          0.888357             0.022030            0.089613 0.888357  0.584847
+      12       53748         28987           24761          0.784973             0.047815            0.167213 0.784973  0.915364

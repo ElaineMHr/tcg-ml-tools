@@ -55,4 +55,3 @@ archive/
 pyrightconfig.json
 
 # Files
-mtg_tools/ml/winrate_prediction.py
