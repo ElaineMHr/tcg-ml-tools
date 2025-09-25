@@ -1,5 +1,5 @@
 batch=64, 64->32 epochs 30 patience 10
-Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
+
 Class counts:
  label
 Aggro       164790
@@ -61,7 +61,6 @@ Confusion matrix (rows=true, cols=pred):
 
 ----------------------------------------------------------
 
-Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
 Class counts:
  label
 Aggro       164790
@@ -162,7 +161,6 @@ Confusion matrix (rows=true, cols=pred):
 ----------------------------------------------------------
 64->64
 
-Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
 Class counts:
  label
 Aggro       164790
@@ -258,7 +256,6 @@ Confusion matrix (rows=true, cols=pred):
 ----------------------------------------------------------
 128->64
 
-Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
 Class counts:
  label
 Aggro       164790
@@ -358,7 +355,6 @@ Confusion matrix (rows=true, cols=pred):
 ----------------------------------------------------------
 128->64->32
 
-Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
 Class counts:
  label
 Aggro       164790
@@ -438,7 +434,6 @@ Confusion matrix (rows=true, cols=pred):
 ----------------------------------------------------------
 128->64->32 + sgd+momentum
 
-Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
 Class counts:
  label
 Aggro       164790

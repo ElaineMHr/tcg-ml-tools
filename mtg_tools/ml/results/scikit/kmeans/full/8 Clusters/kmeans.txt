@@ -1,8 +1,3 @@
-Using DB: D:\Working Files\MTGA\Tools\Python\mtgcore.db
-d:\Working Files\MTGA\Tools\Python\local_dev\kmeans.py:152: UserWarning: Creating legend with loc="best" can be slow with large amounts of data.
-  plt.tight_layout()
-Saved plots → D:\Working Files\MTGA\Tools\Python\local_dev\pca_scatter_clusters.png, D:\Working Files\MTGA\Tools\Python\local_dev\clusters_features_heatmap.png
-
 K=8 - Cluster summary (label percentages use labeled rows only):
  cluster  size_total  size_labeled  size_unlabeled  percentage_Aggro  percentage_Midrange  percentage_Control   purity   entropy
        0       72770         39932           32838          0.804192             0.061530            0.134278 0.804192  0.889300

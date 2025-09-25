@@ -1,0 +1,13 @@
+CV metric: R²
+
+Model           CV R2
+---------------------
+Ridge           0.556
+PolyRidge       0.723
+kNN             0.680
+
+Best by CV R²: PolyRidge
+
+Model              R2      MAE     RMSE
+---------------------------------------
+PolyRidge       0.724    0.049    0.063
