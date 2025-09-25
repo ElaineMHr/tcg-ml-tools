@@ -2,34 +2,39 @@
 
 Overview (ML‑focused; scrapers/DB are showcase only)
 
-- Preprocessing (shared):
-  - Features: numeric CMC curve and color counts + categorical deck traits (dominant_type, main_tribe).
-  - Encoders: OneHotEncoder(handle_unknown=ignore) for categoricals; StandardScaler for numerics.
-  - Dense vs sparse: force dense for models that need it (HGB, SVC, kNN, NN). Fit on train only for PyTorch.
+-   Preprocessing (shared):
 
-- Scikit archetype classification (`mtg_tools/ml/archetype_classification_scikit.py`):
-  - Pipelines via ColumnTransformer: LogReg, LogReg+PolynomialFeatures(2), RandomForest, HistGradientBoosting, SVC‑RBF.
-  - Stratified 5‑fold CV on train (macro‑F1), select best, evaluate on 20% test.
-  - Saves class balance, confusion matrix, and feature importances/coefficients; persists the best pipeline.
+    -   Features: numeric CMC curve and color counts + categorical deck traits (dominant_type, main_tribe).
+    -   Encoders: OneHotEncoder(handle_unknown=ignore) for categoricals; StandardScaler for numerics.
+    -   Dense vs sparse: force dense for models that need it (HGB, SVC, kNN, NN). Fit on train only for PyTorch.
 
-- PyTorch archetype classification (`mtg_tools/ml/archetype_classification_pytorch.py`):
-  - Dense OHE + scaled numerics → MLPs: 64→32, 128→64, 128→64→32.
-  - Optimizers tried: Adam and SGD+momentum; early stopping on validation macro‑F1.
-  - Outputs confusion matrix and classification report for the test split.
+-   Scikit archetype classification (`mtg_tools/ml/archetype_classification_scikit.py`):
 
-- PCA dimensional analysis (`mtg_tools/ml/pca.py`):
-  - Dense OHE + scale, Scree plot for explained variance.
-  - 2D PCA scatter (with labeled/unknown points) and top‑feature contribution bars for PC1/PC2.
+    -   Pipelines via ColumnTransformer: LogReg, LogReg+PolynomialFeatures(2), RandomForest, HistGradientBoosting, SVC‑RBF.
+    -   Stratified 5‑fold CV on train (macro‑F1), select best, evaluate on 20% test.
+    -   Saves class balance, confusion matrix, and feature importances/coefficients; persists the best pipeline.
 
-- K‑Means clustering (`mtg_tools/ml/kmeans.py`):
-  - Dense OHE + scale, K in [2,15] with elbow and silhouette curves.
-  - Final visuals: PCA 2D cluster overlay and cluster feature heatmap; prints cluster composition, purity, entropy.
-  - Example full runs include K=8, 10, 13.
+-   PyTorch archetype classification (`mtg_tools/ml/archetype_classification_pytorch.py`):
 
-- Winrate regression (synthetic target) (`mtg_tools/ml/winrate_regression.py`):
-  - Programmatically synthesizes wins/losses/wr with feature‑driven signal + noise for demonstration.
-  - Models: Ridge, Polynomial Ridge(2 on numerics), kNN(11, distance weights); 5‑fold CV (R²) then test R²/MAE/RMSE.
-  - Saves CV bars, predicted‑vs‑true scatter, and top coefficients plot for the best ridge variant.
+    -   Dense OHE + scaled numerics → MLPs: 64→32, 128→64, 128→64→32.
+    -   Optimizers tried: Adam and SGD+momentum; early stopping on validation macro‑F1.
+    -   Outputs confusion matrix and classification report for the test split.
+
+-   PCA dimensional analysis (`mtg_tools/ml/pca.py`):
+
+    -   Dense OHE + scale, Scree plot for explained variance.
+    -   2D PCA scatter (with labeled/unknown points) and top‑feature contribution bars for PC1/PC2.
+
+-   K‑Means clustering (`mtg_tools/ml/kmeans.py`):
+
+    -   Dense OHE + scale, K in [2,15] with elbow and silhouette curves.
+    -   Final visuals: PCA 2D cluster overlay and cluster feature heatmap; prints cluster composition, purity, entropy.
+    -   Example full runs include K=8, 10, 13.
+
+-   Winrate regression (synthetic target) (`mtg_tools/ml/winrate_regression.py`):
+    -   Programmatically synthesizes wins/losses/wr with feature‑driven signal + noise for demonstration.
+    -   Models: Ridge, Polynomial Ridge(2 on numerics), kNN(11, distance weights); 5‑fold CV (R²) then test R²/MAE/RMSE.
+    -   Saves CV bars, predicted‑vs‑true scatter, and top coefficients plot for the best ridge variant.
 
 Note: The database build and scrapers are included to showcase engineering, but ML scripts are the reproducible core (a demo DB is provided; full DB is optional).
 
@@ -96,11 +101,16 @@ Each script saves figures in the parent directory. They have later been moved to
 
 Archetype buckets: Aggro, Midrange, Control. Features combine deck CMC curve, average CMC, color counts, and coarse categorical descriptors (dominant type, main tribe).
 
--   Scikit‑learn archetype classification (best: RandomForest)
+Class counts:
+Aggro: 164790 decks
+Midrange: 28666 decks
+Control: 80153 decks
+
+-   Scikit‑learn archetype classification (best: RandomForest) (Train/Test - 80/20)
     -   CV macro‑F1 ~0.936; test macro‑F1 ~0.939; test accuracy ~0.959
     -   Strong precision/recall across classes; Midrange is the hardest
     -   Top features align with color mix and CMC curve
--   PyTorch tabular NN classifiers (several depths; Adam and SGD)
+-   PyTorch tabular NN classifiers (several depths; Adam and SGD) (Train/Val/Test - 80/10/10)
     -   Best test macro‑F1 ~0.916 (128‑64‑32), accuracy ~0.945
     -   Close to tree models but slightly behind on macro‑F1
 -   PCA (2D) shows clear class separation along a few principal axes
